@@ -21,9 +21,9 @@ find_package(fmt REQUIRED)
 find_package(Lp3_Sdl CONFIG REQUIRED)
 find_package(Catch2 CONFIG REQUIRED)
 
-# remove this:
-# add_executable(zpipe ${CMAKE_CURRENT_SOURCE_DIR}/src/zpipe.cpp)
-# target_link_libraries(zpipe ZLIB::ZLIB)
+add_executable(zpipe ${CMAKE_CURRENT_SOURCE_DIR}/src/zpipe.cpp)
+target_link_libraries(zpipe ZLIB::ZLIB)
+
 
 add_library(lp3_rsrc
     ${CMAKE_CURRENT_SOURCE_DIR}/include/lp3/rsrc.hpp
@@ -31,8 +31,12 @@ add_library(lp3_rsrc
     ${CMAKE_CURRENT_SOURCE_DIR}/include/lp3/rsrc/containers.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/lp3/rsrc/directory.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/lp3/rsrc/env_vars.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/lp3/rsrc/ZipFile.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/lp3/rsrc/zip_utils.hpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/directory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ZipFile.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/zip_utils.cpp
 )
 set_target_properties(lp3_rsrc PROPERTIES OUTPUT_NAME "Lp3_Rsrc")
 
@@ -55,7 +59,7 @@ target_include_directories(lp3_rsrc
     PRIVATE
         src)
 
-target_link_libraries(lp3_rsrc lp3::lp3_sdl fmt::fmt Catch2::Catch2)
+target_link_libraries(lp3_rsrc lp3::lp3_sdl fmt::fmt ZLIB::ZLIB)
 
 # This is built as a "shared library" in sarcastic air quotes. It's only
 # made that way to make linking faster, and relies on consumers using the same
@@ -72,7 +76,7 @@ if(BUILD_SHARED_LIBS)
 endif()
 
 add_executable(directory_tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/directory_tests.cpp)
-target_link_libraries(directory_tests lp3_rsrc)
+target_link_libraries(directory_tests lp3_rsrc Catch2::Catch2)
 add_test(directory_tests directory_tests
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 # if ("${CMAKE_SYSTEM_NAME}" MATCHES "Emscripten")
@@ -80,6 +84,10 @@ add_test(directory_tests directory_tests
 #         "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/resources@/resources"
 #     )
 # endif()
+
+
+add_executable(zip_ls ${CMAKE_CURRENT_SOURCE_DIR}/src/zip_ls.cpp)
+target_link_libraries(zip_ls lp3_rsrc)
 
 
 # *********************************************************************

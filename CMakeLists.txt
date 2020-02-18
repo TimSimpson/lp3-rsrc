@@ -89,6 +89,9 @@ add_test(directory_tests directory_tests
 add_executable(zip_ls ${CMAKE_CURRENT_SOURCE_DIR}/src/zip_ls.cpp)
 target_link_libraries(zip_ls lp3_rsrc)
 
+add_executable(unzip ${CMAKE_CURRENT_SOURCE_DIR}/src/unzip.cpp)
+target_link_libraries(unzip lp3_rsrc)
+
 
 # *********************************************************************
 # Package / Install Stuff

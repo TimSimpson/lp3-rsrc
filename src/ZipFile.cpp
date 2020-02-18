@@ -30,14 +30,14 @@ namespace lp3::rsrc {
             return get_file(rwops)->buffer.size();
         }
 
-        std::int64_t seek(SDL_RWops * rwops, const int amount, const int whence)
+        std::int64_t seek(SDL_RWops * rwops, const long amount, const int whence)
         {
             SDL_assert(rwops != nullptr);
             const std::int64_t new_position =
                 (RW_SEEK_SET == whence ? 0
                 : RW_SEEK_END == whence ? get_file(rwops)->buffer.size()
                 : get_file(rwops)->position) + amount;
-            if (new_position < 0 || new_position >= get_file(rwops)->buffer.size()) {
+            if (new_position < 0 || new_position > get_file(rwops)->buffer.size()) {
                 LP3_RSRC_LOG_ERROR("Bad seek; new_position would be {}/{}", new_position, get_file(rwops)->buffer.size());
                 return -1;
             }
@@ -48,8 +48,12 @@ namespace lp3::rsrc {
         std::size_t read(SDL_RWops * rwops, void * dst, std::size_t object_size, std::size_t object_count) {
             const std::size_t full_size = object_size * object_count;
             const std::int64_t new_position = get_file(rwops)->position + full_size;
-            if (new_position < 0 || new_position >=  get_file(rwops)->buffer.size()) {
+            if (new_position < 0 || new_position >  get_file(rwops)->buffer.size()) {
                 LP3_RSRC_LOG_ERROR("Bad read; would end up at {}/{}", new_position, get_file(rwops)->buffer.size());
+                return 0;
+            }
+            if (get_file(rwops)->position < 0 || get_file(rwops)->position >= get_file(rwops)->buffer.size()) {
+                LP3_RSRC_LOG_ERROR("Bad read; would begin at {}/{}", get_file(rwops)->position, get_file(rwops)->buffer.size());
                 return 0;
             }
             std::memcpy(dst, get_file(rwops)->buffer.data() + get_file(rwops)->position, full_size);
@@ -72,6 +76,11 @@ namespace lp3::rsrc {
             SDL_RWops * rwops = handle;
             rwops->type = SDL_RWOPS_UNKNOWN;
             rwops->hidden.unknown.data1 = file.release();
+            rwops->close = close;
+            rwops->read = read;
+            rwops->seek = seek;
+            rwops->size = size;
+            rwops->write = write;
             return handle;
         }
     }
@@ -129,19 +138,45 @@ namespace lp3::rsrc {
 
         if (header.compression_method == Z_NO_COMPRESSION) {
             auto uf = std::make_unique<UncompressedFile>(header.compressed_file_size);
-            this->actual_file.read(uf->buffer.data(), uf->buffer.size());
+            if (1 != this->actual_file.read(uf->buffer.data(), uf->buffer.size())) {
+                LP3_RSRC_LOG_ERROR("Error reading in (un)compressed data for {}", file);
+                throw std::runtime_error("Error reading in (un)compressed file data");
+            }
             return create_sdlrwops(std::move(uf));
-        }
-
-        if (header.compression_method != Z_DEFLATED) {
+        } else if (header.compression_method != Z_DEFLATED) {
             LP3_RSRC_LOG_ERROR("Unsupported compression method");
             throw std::runtime_error("unsupported compression method");
+        } else {
+            auto uf = std::make_unique<UncompressedFile>(header.uncompressed_file_size);
+
+            std::vector<char> cb(header.compressed_file_size);
+            if (1 != this->actual_file.read(cb.data(), header.compressed_file_size)) {
+                LP3_RSRC_LOG_ERROR("Error reading in compressed data for {}", file);
+                throw std::runtime_error("error reading compressed file data");
+            }
+
+            z_stream stream;
+            stream.next_in = (Bytef*) cb.data();
+            stream.avail_in = header.compressed_file_size;
+            stream.next_out = (Bytef*) uf->buffer.data();
+            stream.avail_out = uf->buffer.size();
+            stream.zalloc = nullptr;
+            stream.zfree = nullptr;
+
+            const auto init_result = inflateInit2(&stream, -MAX_WBITS);
+            if (Z_OK != init_result) {
+                LP3_RSRC_LOG_ERROR("error initializing zlib stream for {}", file);
+                throw std::runtime_error("error init'ing zlib stream");
+            }
+            const auto inflate_result = inflate(&stream, Z_FINISH);
+            inflateEnd(&stream);
+            if (inflate_result != Z_STREAM_END) {
+                LP3_RSRC_LOG_ERROR("error ending zlib stream for {}", file);
+                throw std::runtime_error("error ending zlib stream");
+            }
+
+            return create_sdlrwops(std::move(uf));
         }
-
-        LP3_RSRC_LOG_ERROR("TODO more stuff!")
-
-        lp3::sdl::RWops handle(nullptr);
-        return handle;
     }
 
 }

@@ -12,8 +12,21 @@
 
 namespace lp3::rsrc {
 
+
+enum class CompressionMethods {
+    NONE = 0,
+    LZW = 1, // 1 - Shrunk / LZW, 8K buffer, 9-13 bits with partial clearing
+    REDUCED_1 = 2, // - Reduced-1 / Probalistic compression, lower 7 bits
+    REDUCED_2 = 3, // - Reduced-2 / Probalistic compression, lower 6 bits
+    REDUCDE_3 = 4, // - Reduced-3 / Probalistic compression, lower 5 bits
+    REDUCED_4 = 5, // 5 - Reduced-4 / Probalistic compression, lower 4 bits
+    IMPLODED = 6   // - Imploded / 2/3 Shanno-Fano
+};
+
 #pragma pack(1)
+
 // See https://www.fileformat.info/format/zip/corion.htm
+
 struct FileHeader {
     char signature[4];
     std::uint16_t version;
@@ -21,10 +34,17 @@ struct FileHeader {
     std::uint16_t compression_method;
     std::uint32_t dos_date_time;
     std::uint32_t crc_of_file;
+    std::uint32_t compressed_file_size;
     std::uint32_t uncompressed_file_size;
     std::uint16_t file_name_length;
     std::uint16_t extra_field_length;
+
+    std::ptrdiff_t real_size() const {
+        return (sizeof(*this)) + (this->file_name_length + this->extra_field_length);
+    }
 };
+
+constexpr char file_header_signature[] = {'P', 'K', (char)03, (char)04};
 
 struct CentralDirectoryHeader {
     char signature[4];

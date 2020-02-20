@@ -21,9 +21,6 @@ find_package(fmt REQUIRED)
 find_package(Lp3_Sdl CONFIG REQUIRED)
 find_package(Catch2 CONFIG REQUIRED)
 
-add_executable(zpipe ${CMAKE_CURRENT_SOURCE_DIR}/src/zpipe.cpp)
-target_link_libraries(zpipe ZLIB::ZLIB)
-
 
 add_library(lp3_rsrc
     ${CMAKE_CURRENT_SOURCE_DIR}/include/lp3/rsrc.hpp

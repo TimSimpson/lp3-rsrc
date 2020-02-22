@@ -7,7 +7,7 @@
 #endif
 
 #if defined(_WIN32)                                                            \
-    && (defined(BUILD_SHARED_LIBS) || defined(LP3_RSRC_API_DYNAMIC))
+        && (defined(BUILD_SHARED_LIBS) || defined(LP3_RSRC_API_DYNAMIC))
 #if defined(LP3_RSRC_API_CREATE)
 #define LP3_RSRC_API __declspec(dllexport)
 #else

@@ -45,14 +45,14 @@ void ZipStreamReader::close(bool can_throw) {
 }
 
 void ZipStreamReader::ensure_compressed_buffer_full(
-    CompressedDataSource &source) {
+        CompressedDataSource &source) {
     if (this->compressed_data_available >= this->compressed.size()) {
         // Buffer is full, so just return.
         return;
     }
     if (source.eof() && this->compressed_data_available == 0) {
         LP3_RSRC_LOG_ERROR(
-            "EOF on input stream, but compressed data has been exhausted!");
+                "EOF on input stream, but compressed data has been exhausted!");
         throw std::runtime_error("Bad zip stream");
     }
 

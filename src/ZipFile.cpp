@@ -49,11 +49,11 @@ namespace {
             SDL_assert(amount >= 0);
             SDL_assert(whence == RW_SEEK_CUR);
             const std::int64_t new_position
-                = (RW_SEEK_SET == whence
-                       ? 0
-                       : RW_SEEK_END == whence ? this->buffer.size()
-                                               : this->position)
-                  + amount;
+                    = (RW_SEEK_SET == whence
+                               ? 0
+                               : RW_SEEK_END == whence ? this->buffer.size()
+                                                       : this->position)
+                      + amount;
             if (new_position < 0 || new_position > this->buffer.size()) {
                 LP3_RSRC_LOG_ERROR("Bad seek; new_position would be {}/{}",
                                    new_position, this->buffer.size());
@@ -240,7 +240,7 @@ ZipFile::ZipFile(lp3::sdl::RWops &&zip_file)
         FileRef ref;
         ref.file_name = dir->get_name();
         ref.offset_to_file
-            = dir->relative_offset_of_local_header_from_start_of_first_disk;
+                = dir->relative_offset_of_local_header_from_start_of_first_disk;
         file_refs.push_back(ref);
     }
 }
@@ -259,8 +259,8 @@ ZipFile::~ZipFile() {
 sdl::RWops ZipFile::load(const char *file) {
     std::string search{file};
     auto result = std::find_if(
-        file_refs.begin(), file_refs.end(),
-        [file](const FileRef &ref) { return ref.file_name == file; });
+            file_refs.begin(), file_refs.end(),
+            [file](const FileRef &ref) { return ref.file_name == file; });
     if (result == file_refs.end()) {
         LP3_RSRC_LOG_ERROR("{} not found in zipfile", file);
         throw std::runtime_error("file not found");
@@ -294,12 +294,12 @@ sdl::RWops ZipFile::load(const char *file) {
 
     if (header.compression_method == Z_NO_COMPRESSION) {
         auto uf = std::make_unique<UncompressedFile>(
-            file, this->open_files, header.compressed_file_size);
+                file, this->open_files, header.compressed_file_size);
         if (1 != this->actual_file.read(uf->buffer.data(), uf->buffer.size())) {
             LP3_RSRC_LOG_ERROR("Error reading in (un)compressed data for {}",
                                file);
             throw std::runtime_error(
-                "Error reading in (un)compressed file data");
+                    "Error reading in (un)compressed file data");
         }
         return create_sdlrwops(std::move(uf));
     } else if (header.compression_method != Z_DEFLATED) {
@@ -318,7 +318,7 @@ sdl::RWops ZipFile::load(const char *file) {
         //   auto uf = std::make_unique<CompressedFile>(args);
 
         auto uf = std::make_unique<UncompressedFile>(
-            file, this->open_files, header.uncompressed_file_size);
+                file, this->open_files, header.uncompressed_file_size);
 
         std::vector<char> cb(header.compressed_file_size);
         if (1

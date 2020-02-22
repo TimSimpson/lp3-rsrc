@@ -30,8 +30,10 @@ add_library(lp3_rsrc
     ${CMAKE_CURRENT_SOURCE_DIR}/include/lp3/rsrc/env_vars.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/lp3/rsrc/ZipFile.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/lp3/rsrc/zip_utils.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/lp3/rsrc/zip/stream.hpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/directory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/stream.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ZipFile.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/zip_utils.cpp
 )

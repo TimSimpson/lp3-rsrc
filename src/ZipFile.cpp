@@ -43,6 +43,11 @@ namespace {
         std::int64_t size() const { return this->buffer.size(); }
 
         std::int64_t seek(const long amount, const int whence) {
+            // These two asserts aren't really necessary, except that it would
+            // be best to keep the behavior the same as the streaming zip file
+            // class below.
+            SDL_assert(amount >= 0);
+            SDL_assert(whence == RW_SEEK_CUR);
             const std::int64_t new_position
                 = (RW_SEEK_SET == whence
                        ? 0
@@ -127,6 +132,101 @@ namespace {
         rwops->hidden.unknown.data1 = file.release();
         return handle;
     }
+
+    // struct CompressedFileArgs {
+    //     const std::string * file_name;
+    //     TrackerList * tracker_arg tracker;
+    //     lp3::sdl::RWops * zip_file;
+    //     std::int64_t zip_file_starting_position;
+    //     std::int64_t zip_compressed_max_size;
+    // }
+
+    // struct CompressedFile {
+    //     constexpr int compressed_buffer_size = 2048;
+    //     lp3::sdl::RWops & actual_file;
+    //     std::int64_t zf_starting_position;
+    //     std::int64_t zip_compressed_max_size;
+    //     std::vector<char> compressed_buffer;
+    //     std::int64_t zf_position;
+    //     std::int64_t ub_position;
+    //     OpenFileTracker tracker;
+    //     z_stream stream;
+    //     bool closed;
+
+    //     CompressedFile(CompressedFileArgs args)
+    //         : actual_file(*args.actual_file),
+    //         zf_starting_position(args.zf_starting_position),
+    //         zip_compressed_max_size(args.zip_compressed_max_size),
+    //         compressed_buffer(args.compressed_buffer),
+    //         zf_position(0),
+    //         ub_position(0),
+    //         tracker(*args.file_name, *args.tracker),
+    //         closed(false)
+    //     {
+    //         read_amount = std::min(this->zip_compressed_max_size,
+    //         compressed_buffer_size); if (1
+    //           != this->actual_file.read(compressed_buffer.data(),
+    //           read_amount)) { LP3_RSRC_LOG_ERROR("Error reading in compressed
+    //           data for {}", file); throw std::runtime_error("error reading
+    //           compressed file data");
+    //       }
+
+    //       stream.next_in = 0;
+    //       stream.avail_in = 0;
+    //       stream.next_out = 0;
+    //       stream.avail_out = 0;
+    //       stream.opaque = 0;
+    //       stream.zalloc = nullptr;
+    //       stream.zfree = nullptr;
+
+    //       const int result = inflateInit(MY_Z_STREAM);
+    //       if (Z_OK != result) {
+    //           LP3_RSRC_LOG_ERROR("error initializing zlib stream for {}",
+    //           *args.file_name); throw std::runtime_error("error init'ing zlib
+    //           stream");
+    //       }
+    //     }
+
+    //     ~CompressedFile() {
+    //       end();
+    //     }
+
+    //     void end(bool can_throw) {
+    //         if (closed) { return; }
+    //         closed = true;
+    //         if (Z_OK != inflateEnd(&stream)) {
+    //             if (nullptr != stream.msg) {
+    //               LP3_RSRC_LOG_ERROR("Zlib inflateEnd error: {}",
+    //               stream.msg); if (can_throw) {
+    //                   throw std::runtime_error("error shutting down zlib
+    //                   stream");
+    //               }
+    //             }
+    //         }
+    //     }
+
+    //     std::size_t read(void *dst, std::size_t object_size,
+    //                      std::size_t object_count) {
+    //       object_size
+    //       stream.next_in = (Bytef *)this->compressed_buffer.data();
+    //       stream.avail_in = this->zip_compressed_max_size -
+    //       this->zf_position; stream.next_out = (Bytef *)dst; stream.avail_out
+    //       = uf->buffer.size(); stream.zalloc = nullptr; stream.zfree =
+    //       nullptr;
+
+    //       const auto init_result = inflateInit2(&stream, -MAX_WBITS);
+    //       if (Z_OK != init_result) {
+    //           LP3_RSRC_LOG_ERROR("error initializing zlib stream for {}",
+    //           file); throw std::runtime_error("error init'ing zlib stream");
+    //       }
+    //       const auto inflate_result = inflate(&stream, Z_FINISH);
+    //       inflateEnd(&stream);
+    //       if (inflate_result != Z_STREAM_END) {
+    //           LP3_RSRC_LOG_ERROR("error ending zlib stream for {}", file);
+    //           throw std::runtime_error("error ending zlib stream");
+    //       }
+    //     }
+    // };
 } // namespace
 
 ZipFile::ZipFile(lp3::sdl::RWops &&zip_file)
@@ -142,6 +242,16 @@ ZipFile::ZipFile(lp3::sdl::RWops &&zip_file)
         ref.offset_to_file
             = dir->relative_offset_of_local_header_from_start_of_first_disk;
         file_refs.push_back(ref);
+    }
+}
+
+ZipFile::~ZipFile() {
+    if (open_files.size() != 0) {
+        LP3_RSRC_LOG_ERROR("ERROR! ZipFile is being closed but has still has "
+                           "unclosed RWops.");
+        for (const auto f : open_files) {
+            LP3_RSRC_LOG_ERROR("\tFile: ", f);
+        }
     }
 }
 
@@ -196,6 +306,17 @@ sdl::RWops ZipFile::load(const char *file) {
         LP3_RSRC_LOG_ERROR("Unsupported compression method");
         throw std::runtime_error("unsupported compression method");
     } else {
+        // CompressedFileArgs args;
+        //   std::string file_str(file);
+        //   args.file_name = &file_str;
+        //   args.tracker = &this->open_files;
+        //   args.zip_file = &this->actual_file;
+        //   args.zip_file_starting_position = result->offset_to_file +
+        //   header.real_size(); args.zip_compressed_max_size =
+        //   header.compressed_file_size;
+
+        //   auto uf = std::make_unique<CompressedFile>(args);
+
         auto uf = std::make_unique<UncompressedFile>(
             file, this->open_files, header.uncompressed_file_size);
 

@@ -19,6 +19,7 @@ namespace lp3::rsrc {
 class LP3_RSRC_API ZipFile : public RContainer {
   public:
     ZipFile(lp3::sdl::RWops &&zip_file);
+    ~ZipFile();
 
     /* Opens a resource for reading. */
     sdl::RWops load(const char *file) override;

@@ -4,6 +4,7 @@
 
 #include "config.hpp"
 #include "containers.hpp"
+#include <list>
 #include <lp3/sdl.hpp>
 #include <string>
 #include <vector>
@@ -28,8 +29,15 @@ class LP3_RSRC_API ZipFile : public RContainer {
         std::uint32_t offset_to_file;
     };
 
+    // class OpenFile {
+    // public:
+    //     virtual ~OpenFile();
+    //     std::string get_file_name() const;
+    // };
+
     lp3::sdl::RWops actual_file;
     std::vector<FileRef> file_refs;
+    std::list<std::string> open_files;
 };
 // -/
 

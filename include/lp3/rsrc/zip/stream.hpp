@@ -12,15 +12,15 @@
 namespace lp3::rsrc::zip {
 
 // ----------------------------------------------------------------------------
-// class CompressedDataSource
+// class ZipStreamSource
 // ----------------------------------------------------------------------------
-//     A source for compressed data. A ZipStreamReader uses this to collect
+//     A source for compressed data. A ZipStreamInflater uses this to collect
 //     more compressed data from some other source to avoid having to read
 //     all of the compressed data in at once.
 // ----------------------------------------------------------------------------
-class CompressedDataSource {
+class ZipStreamSource {
   public:
-    virtual ~CompressedDataSource() {}
+    virtual ~ZipStreamSource() {}
 
     // This is initally false, and turns to true when the data is all out.
     // Calls to `read_data` after that are not allowed.
@@ -31,12 +31,21 @@ class CompressedDataSource {
     virtual std::int64_t read_data(char *dst, std::int64_t max_size) = 0;
 };
 
-class ZipStreamReader {
+// ----------------------------------------------------------------------------
+// class ZipStreamInflater
+// ----------------------------------------------------------------------------
+//     Reads uncompresses zipped data from some source and returns it in
+//     in chunks determined by "uncompressed_buffer_size".
+//
+//     Internally it stores two buffers, one for compressed data and one for
+//     uncompressed data, along with a z_stream structure and other stuff.
+// ----------------------------------------------------------------------------
+class ZipStreamInflater {
   public:
-    ZipStreamReader(std::int64_t compressed_buffer_size,
+    ZipStreamInflater(std::int64_t compressed_buffer_size,
                     std::int64_t uncompressed_buffer_size);
 
-    ~ZipStreamReader();
+    ~ZipStreamInflater();
 
     struct ReadResult {
         char *data;         // starting point of data. nullptr if EOF
@@ -46,7 +55,8 @@ class ZipStreamReader {
 
     // Reads as much as the stream as it can to fill buffer. Returns a pointer
     // to the first character in buffer and the amount of data written.
-    ReadResult read(CompressedDataSource &source);
+    // The source should be the same each time to avoid errors.
+    ReadResult read(ZipStreamSource &source);
 
   private:
     std::vector<char> compressed;
@@ -56,7 +66,7 @@ class ZipStreamReader {
     std::int64_t compressed_data_available;
 
     void close(bool can_throw);
-    void ensure_compressed_buffer_full(CompressedDataSource &source);
+    void ensure_compressed_buffer_full(ZipStreamSource &source);
 };
 
 } // namespace lp3::rsrc::zip

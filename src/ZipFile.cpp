@@ -5,9 +5,7 @@
 #include <lp3/rsrc/zip_utils.hpp>
 #include <lp3/sdl.hpp>
 #include <zlib.h>
-
-#define GET_UNCOMPRESSED_FILE                                                  \
-    reinterpret_cast<UncompressedFile *>(rwops->hidden)
+#include <lp3/rsrc/zip/stream.hpp>
 
 namespace lp3::rsrc {
 
@@ -82,56 +80,172 @@ namespace {
         }
     };
 
-    UncompressedFile *get_file(SDL_RWops *rwops) {
-        return (UncompressedFile *)rwops->hidden.unknown.data1;
-    }
+    class CompressedFileReader: public zip::ZipStreamSource {
 
-    std::int64_t size(SDL_RWops *rwops) {
-        SDL_assert(rwops != nullptr);
-        return get_file(rwops)->size();
-    }
+      private:
+        bool _eof;
+        OpenFileTracker tracker;
+        lp3::sdl::RWops & actual_file;
+        std::int64_t size_left;
 
-    std::int64_t seek(SDL_RWops *rwops, const long amount, const int whence) {
-        SDL_assert(rwops != nullptr);
-        return get_file(rwops)->seek(amount, whence);
-    }
+      public:
+        CompressedFileReader(const std::string &file_name, TrackerList &tracker_arg, lp3::sdl::RWops & actual_file, std::int64_t size_left_arg)
+        : _eof(false),
+          tracker(file_name, tracker_arg),
+          actual_file(actual_file_arg),
+          size_left(size_left_arg)
+        {}
 
-    std::size_t read(SDL_RWops *rwops, void *dst, std::size_t object_size,
-                     std::size_t object_count) {
-        SDL_assert(rwops != nullptr);
-        return get_file(rwops)->read(dst, object_size, object_count);
-    }
-
-    std::size_t write(SDL_RWops *rwops, const void *dst,
-                      std::size_t object_count, std::size_t object_size) {
-        SDL_assert(rwops != nullptr);
-        LP3_RSRC_LOG_ERROR("An attempt was made to write to a zip file.");
-        return 0;
-    }
-
-    int close(SDL_RWops *rwops) {
-        if (rwops != nullptr) {
-            if (rwops->hidden.unknown.data1 != nullptr) {
-                delete get_file(rwops);
-                rwops->hidden.unknown.data1 = nullptr;
-            }
-            delete rwops;
+        bool eof() override {
+            return _eof;
         }
-        return 0;
-    }
 
-    lp3::sdl::RWops create_sdlrwops(std::unique_ptr<UncompressedFile> &&file) {
-        lp3::sdl::RWops handle(new SDL_RWops);
-        SDL_RWops *rwops = handle;
-        rwops->type = SDL_RWOPS_UNKNOWN;
-        rwops->close = close;
-        rwops->read = read;
-        rwops->seek = seek;
-        rwops->size = size;
-        rwops->write = write;
-        rwops->hidden.unknown.data1 = file.release();
-        return handle;
-    }
+        std::int64_t read_data(char * dst, std::int64_t max_size) override {
+            const auto size_to_read = std::min(max_size, this->size_left);
+            if (1 != this->actual_file.read(dst, size_to_read)) {
+                LP3_RSRC_LOG_ERROR("Error reading zip stream.");
+                throw std::runtime_error("Zip stream read error.");
+            }
+            this->size_left -= size_to_read;
+            _eof = this->size_left <= 0;
+            return size_to_read;
+        }
+    };
+
+    struct CompressedFile {
+        CompressedFileReader source;
+        zip::ZipStreamInflater inflater;
+        std::int64_t compressed_file_size;
+        std::int64_t uncompressed_file_size;
+        std::int64_t position_in_uncompressed_file;
+        zip::ZipStreamInflater::ReadResult last_read;
+
+        CompressedFile(const std::string &file_name, TrackerList &tracker_arg, lp3::sdl::RWops & actual_file, std::int64_t size_left_arg, std::in64_t uncompressed_file_size_arg)
+            : source(file_name, tracker_arg, actual_file, size_left_arg),
+              inflater(2048, 2048),
+              compressed_file_size(size_left_arg),
+              uncompressed_file_size(uncompressed_file_size_arg),
+              position_in_uncompressed_file(0),
+              size_left_in_last_inflate_result{nullptr, 0, false}
+          {
+
+          }
+
+        std::int64_t size() const { return this->uncompressed_file_size_arg; }
+
+        std::int64_t seek(const long amount, const int whence) {
+            // These two asserts aren't really necessary, except that it would
+            // be best to keep the behavior the same as the streaming zip file
+            // class below.
+            if (amount < 0 || whence != RW_SEEK_CUR || (whence == RW_SEEK_SET && this->position_in_uncompressed_file == 0)) {
+              LP3_RSRC_LOG_ERROR("Seek error; whence={}, amount={}", whence, amount);
+              throw std::runtime_error("Can only seek forward.");
+            }
+
+            std::int64_t result = 0;
+            std::int64_t amount_left = amount;
+
+            while(amount_left > 0 && !this->last_read.eof) {
+              // if (this->last_read.eof) {
+              //   if (amount_left == 0) {
+              //     return 0;
+              //   }
+              //   raise std::runtime_error("Cannot seek forward; at EOF already.");
+              // }
+
+              if (this->last_read.count <= 0) {
+                this->last_read = this->inflater.read(this->source);
+              }
+              std::int64_t read_count = std::min(amount_left, this->last_read.count)
+              this->last_read.data += read_count;
+              this->last_read.count -= read_count;
+              this->position_in_uncompressed_file += read_count;
+              result += read_count;
+              amount_left -= read_count;
+            }
+            return result;
+        }
+
+        std::size_t read(void *dst, std::size_t object_size,
+                         std::size_t object_count) {
+            std::size_t result = 0;
+            std::int64_t amount_left = object_size * object_count;
+            void * write_ptr = dst;
+
+            while(amount_left > 0 && !this->last_read.eof) {
+              if (this->last_read.count <= 0) {
+                this->last_read = this->inflater.read(this->source);
+              }
+              std::int64_t read_count = std::min(amount_left, this->last_read.count);
+
+              std::memcpy(write_ptr, this->last_read.data, read_count);
+              write_ptr += read_count;
+              this->last_read.data += read_count;
+              this->last_read.count -= read_count;
+              this->position_in_uncompressed_file += read_count;
+              result += read_count;
+              amount_left -= read_count;
+            }
+
+            return result;
+        }
+    };
+
+    template <class C> struct SDL_RWopsFuncs {
+        static C *get_file(SDL_RWops *rwops) {
+            return (C *)rwops->hidden.unknown.data1;
+        }
+
+        static std::int64_t size(SDL_RWops *rwops) {
+            SDL_assert(rwops != nullptr);
+            return get_file(rwops)->size();
+        }
+
+        static std::int64_t seek(SDL_RWops *rwops, const long amount,
+                                 const int whence) {
+            SDL_assert(rwops != nullptr);
+            return get_file(rwops)->seek(amount, whence);
+        }
+
+        static std::size_t read(SDL_RWops *rwops, void *dst,
+                                std::size_t object_size,
+                                std::size_t object_count) {
+            SDL_assert(rwops != nullptr);
+            return get_file(rwops)->read(dst, object_size, object_count);
+        }
+
+        static std::size_t write(SDL_RWops *rwops, const void *dst,
+                                 std::size_t object_count,
+                                 std::size_t object_size) {
+            SDL_assert(rwops != nullptr);
+            LP3_RSRC_LOG_ERROR("An attempt was made to write to a zip file.");
+            return 0;
+        }
+
+        static int close(SDL_RWops *rwops) {
+            if (rwops != nullptr) {
+                if (rwops->hidden.unknown.data1 != nullptr) {
+                    delete get_file(rwops);
+                    rwops->hidden.unknown.data1 = nullptr;
+                }
+                delete rwops;
+            }
+            return 0;
+        }
+
+        static lp3::sdl::RWops create_sdlrwops(std::unique_ptr<C> &&file) {
+            lp3::sdl::RWops handle(new SDL_RWops);
+            SDL_RWops *rwops = handle;
+            rwops->type = SDL_RWOPS_UNKNOWN;
+            rwops->close = close;
+            rwops->read = read;
+            rwops->seek = seek;
+            rwops->size = size;
+            rwops->write = write;
+            rwops->hidden.unknown.data1 = file.release();
+            return handle;
+        }
+    };
 
     // struct CompressedFileArgs {
     //     const std::string * file_name;
@@ -257,6 +371,15 @@ ZipFile::~ZipFile() {
 
 /* Opens a resource for reading. */
 sdl::RWops ZipFile::load(const char *file) {
+    if (open_files.size() != 0) {
+        LP3_RSRC_LOG_ERROR("ERROR! A new ZipFile is being loaded, but the file is currently being used to read another zipfile.");
+        for (const auto f : open_files) {
+            LP3_RSRC_LOG_ERROR("\tFile: ", f);
+        }
+        throw std::runtime_error("Concurrent zip file read error!");
+    }
+
+
     std::string search{file};
     auto result = std::find_if(
             file_refs.begin(), file_refs.end(),
@@ -301,7 +424,7 @@ sdl::RWops ZipFile::load(const char *file) {
             throw std::runtime_error(
                     "Error reading in (un)compressed file data");
         }
-        return create_sdlrwops(std::move(uf));
+        return SDL_RWopsFuncs<UncompressedFile>::create_sdlrwops(std::move(uf));
     } else if (header.compression_method != Z_DEFLATED) {
         LP3_RSRC_LOG_ERROR("Unsupported compression method");
         throw std::runtime_error("unsupported compression method");
@@ -316,6 +439,11 @@ sdl::RWops ZipFile::load(const char *file) {
         //   header.compressed_file_size;
 
         //   auto uf = std::make_unique<CompressedFile>(args);
+        auto uf = std::make_unique<CompressedFile>(
+          file, this->open_files, this->actual_file, header.compressed_file_size, header.uncompressed_file_size);
+
+
+
 
         auto uf = std::make_unique<UncompressedFile>(
                 file, this->open_files, header.uncompressed_file_size);
@@ -347,7 +475,7 @@ sdl::RWops ZipFile::load(const char *file) {
             throw std::runtime_error("error ending zlib stream");
         }
 
-        return create_sdlrwops(std::move(uf));
+        return SDL_RWopsFuncs<UncompressedFile>::create_sdlrwops(std::move(uf));
     }
 }
 

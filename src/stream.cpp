@@ -3,9 +3,9 @@
 
 namespace lp3::rsrc::zip {
 
-constexpr ZipStreamReader::ReadResult EOF_RESULT = {nullptr, 0, true};
+constexpr ZipStreamInflater::ReadResult EOF_RESULT = {nullptr, 0, true};
 
-ZipStreamReader::ZipStreamReader(std::int64_t compressed_buffer_size,
+ZipStreamInflater::ZipStreamInflater(std::int64_t compressed_buffer_size,
                                  std::int64_t uncompressed_buffer_size)
     : compressed(compressed_buffer_size),
       uncompressed(uncompressed_buffer_size),
@@ -27,9 +27,9 @@ ZipStreamReader::ZipStreamReader(std::int64_t compressed_buffer_size,
     closed = false;
 }
 
-ZipStreamReader::~ZipStreamReader() { close(false); }
+ZipStreamInflater::~ZipStreamInflater() { close(false); }
 
-void ZipStreamReader::close(bool can_throw) {
+void ZipStreamInflater::close(bool can_throw) {
     if (this->closed) {
         return;
     }
@@ -44,8 +44,8 @@ void ZipStreamReader::close(bool can_throw) {
     }
 }
 
-void ZipStreamReader::ensure_compressed_buffer_full(
-        CompressedDataSource &source) {
+void ZipStreamInflater::ensure_compressed_buffer_full(
+        ZipStreamSource &source) {
     if (this->compressed_data_available >= this->compressed.size()) {
         // Buffer is full, so just return.
         return;
@@ -64,8 +64,8 @@ void ZipStreamReader::ensure_compressed_buffer_full(
     this->compressed_data_available = this->compressed_data_available + result;
 }
 
-ZipStreamReader::ReadResult
-ZipStreamReader::read(CompressedDataSource &source) {
+ZipStreamInflater::ReadResult
+ZipStreamInflater::read(ZipStreamSource &source) {
     if (closed) {
         return EOF_RESULT;
     }

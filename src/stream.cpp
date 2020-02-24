@@ -5,24 +5,6 @@ namespace lp3::rsrc::zip {
 
 constexpr ZipStreamInflater::ReadResult EOF_RESULT = {nullptr, 0, true};
 
-namespace {
-    void print_z_s(z_stream &z_s) {
-        LP3_RSRC_LOG_ERROR("\tnext_in={}\n", (std::uint64_t)z_s.next_in);
-        LP3_RSRC_LOG_ERROR("\tavail_in={}\n", z_s.avail_in);
-        LP3_RSRC_LOG_ERROR("\ttotal_in={}\n", z_s.total_in);
-
-        LP3_RSRC_LOG_ERROR("\tnext_out={}\n", (std::uint64_t)z_s.next_out);
-        LP3_RSRC_LOG_ERROR("\tavail_out={}\n", z_s.avail_out);
-        LP3_RSRC_LOG_ERROR("\ttotal_out={}\n", z_s.total_out);
-
-        LP3_RSRC_LOG_ERROR("\tdata_type={}\n", z_s.data_type);
-        LP3_RSRC_LOG_ERROR("\tadler={}\n", z_s.adler);
-
-        LP3_RSRC_LOG_ERROR("\tzalloc={}\n", (std::uint64_t)z_s.zalloc);
-        LP3_RSRC_LOG_ERROR("\tzfree={}\n", (std::uint64_t)z_s.zfree);
-    }
-} // namespace
-
 ZipStreamInflater::ZipStreamInflater(std::int64_t compressed_buffer_size,
                                      std::int64_t uncompressed_buffer_size)
     : compressed(compressed_buffer_size),

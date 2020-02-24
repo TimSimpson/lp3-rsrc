@@ -434,46 +434,11 @@ sdl::RWops ZipFile::load(const char *file) {
         LP3_RSRC_LOG_ERROR("Unsupported compression method");
         throw std::runtime_error("unsupported compression method");
     } else {
-#ifndef GOOD_AND_PURE
         auto cf = std::make_unique<CompressedFile>(
                 file, this->open_files, this->actual_file,
                 header.compressed_file_size, header.uncompressed_file_size);
 
         return SDL_RWopsFuncs<CompressedFile>::create_sdlrwops(std::move(cf));
-#else
-
-        auto uf = std::make_unique<UncompressedFile>(
-                file, this->open_files, header.uncompressed_file_size);
-
-        std::vector<char> cb(header.compressed_file_size);
-        if (1
-            != this->actual_file.read(cb.data(), header.compressed_file_size)) {
-            LP3_RSRC_LOG_ERROR("Error reading in compressed data for {}", file);
-            throw std::runtime_error("error reading compressed file data");
-        }
-
-        z_stream stream;
-        stream.next_in = (Bytef *)cb.data();
-        stream.avail_in = header.compressed_file_size;
-        stream.next_out = (Bytef *)uf->buffer.data();
-        stream.avail_out = uf->buffer.size();
-        stream.zalloc = nullptr;
-        stream.zfree = nullptr;
-
-        const auto init_result = inflateInit2(&stream, -MAX_WBITS);
-        if (Z_OK != init_result) {
-            LP3_RSRC_LOG_ERROR("error initializing zlib stream for {}", file);
-            throw std::runtime_error("error init'ing zlib stream");
-        }
-        const auto inflate_result = inflate(&stream, Z_FINISH);
-        inflateEnd(&stream);
-        if (inflate_result != Z_STREAM_END) {
-            LP3_RSRC_LOG_ERROR("error ending zlib stream for {}", file);
-            throw std::runtime_error("error ending zlib stream");
-        }
-
-        return SDL_RWopsFuncs<UncompressedFile>::create_sdlrwops(std::move(uf));
-#endif
     }
 }
 

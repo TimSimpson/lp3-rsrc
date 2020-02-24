@@ -24,6 +24,9 @@ class LP3_RSRC_API ZipFile : public RContainer {
     /* Opens a resource for reading. */
     sdl::RWops load(const char *file) override;
 
+    sdl::RWops load(const char *file, std::int64_t compression_buffer_size,
+                    std::int64_t decompression_buffer_size);
+
   private:
     struct FileRef {
         std::string file_name;

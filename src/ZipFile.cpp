@@ -2,10 +2,10 @@
 
 #include <cstring>
 #include <iostream>
+#include <lp3/rsrc/zip/stream.hpp>
 #include <lp3/rsrc/zip_utils.hpp>
 #include <lp3/sdl.hpp>
 #include <zlib.h>
-#include <lp3/rsrc/zip/stream.hpp>
 
 namespace lp3::rsrc {
 
@@ -80,27 +80,27 @@ namespace {
         }
     };
 
-    class CompressedFileReader: public zip::ZipStreamSource {
+    class CompressedFileReader : public zip::ZipStreamSource {
 
       private:
         bool _eof;
         OpenFileTracker tracker;
-        lp3::sdl::RWops & actual_file;
+        lp3::sdl::RWops &actual_file;
         std::int64_t size_left;
 
       public:
-        CompressedFileReader(const std::string &file_name, TrackerList &tracker_arg, lp3::sdl::RWops & actual_file, std::int64_t size_left_arg)
-        : _eof(false),
-          tracker(file_name, tracker_arg),
-          actual_file(actual_file_arg),
-          size_left(size_left_arg)
-        {}
+        CompressedFileReader(const std::string &file_name,
+                             TrackerList &tracker_arg,
+                             lp3::sdl::RWops &actual_file_arg,
+                             std::int64_t size_left_arg)
+            : _eof(false),
+              tracker(file_name, tracker_arg),
+              actual_file(actual_file_arg),
+              size_left(size_left_arg) {}
 
-        bool eof() override {
-            return _eof;
-        }
+        bool eof() override { return _eof; }
 
-        std::int64_t read_data(char * dst, std::int64_t max_size) override {
+        std::int64_t read_data(char *dst, std::int64_t max_size) override {
             const auto size_to_read = std::min(max_size, this->size_left);
             if (1 != this->actual_file.read(dst, size_to_read)) {
                 LP3_RSRC_LOG_ERROR("Error reading zip stream.");
@@ -120,48 +120,52 @@ namespace {
         std::int64_t position_in_uncompressed_file;
         zip::ZipStreamInflater::ReadResult last_read;
 
-        CompressedFile(const std::string &file_name, TrackerList &tracker_arg, lp3::sdl::RWops & actual_file, std::int64_t size_left_arg, std::in64_t uncompressed_file_size_arg)
+        CompressedFile(const std::string &file_name, TrackerList &tracker_arg,
+                       lp3::sdl::RWops &actual_file, std::int64_t size_left_arg,
+                       std::int64_t uncompressed_file_size_arg)
             : source(file_name, tracker_arg, actual_file, size_left_arg),
               inflater(2048, 2048),
               compressed_file_size(size_left_arg),
               uncompressed_file_size(uncompressed_file_size_arg),
               position_in_uncompressed_file(0),
-              size_left_in_last_inflate_result{nullptr, 0, false}
-          {
+              last_read{nullptr, 0, false} {}
 
-          }
-
-        std::int64_t size() const { return this->uncompressed_file_size_arg; }
+        std::int64_t size() const { return this->uncompressed_file_size; }
 
         std::int64_t seek(const long amount, const int whence) {
             // These two asserts aren't really necessary, except that it would
             // be best to keep the behavior the same as the streaming zip file
             // class below.
-            if (amount < 0 || whence != RW_SEEK_CUR || (whence == RW_SEEK_SET && this->position_in_uncompressed_file == 0)) {
-              LP3_RSRC_LOG_ERROR("Seek error; whence={}, amount={}", whence, amount);
-              throw std::runtime_error("Can only seek forward.");
+            if (amount < 0 || whence != RW_SEEK_CUR
+                || (whence == RW_SEEK_SET
+                    && this->position_in_uncompressed_file == 0)) {
+                LP3_RSRC_LOG_ERROR("Seek error; whence={}, amount={}", whence,
+                                   amount);
+                throw std::runtime_error("Can only seek forward.");
             }
 
             std::int64_t result = 0;
             std::int64_t amount_left = amount;
 
-            while(amount_left > 0 && !this->last_read.eof) {
-              // if (this->last_read.eof) {
-              //   if (amount_left == 0) {
-              //     return 0;
-              //   }
-              //   raise std::runtime_error("Cannot seek forward; at EOF already.");
-              // }
+            while (amount_left > 0 && !this->last_read.eof) {
+                // if (this->last_read.eof) {
+                //   if (amount_left == 0) {
+                //     return 0;
+                //   }
+                //   raise std::runtime_error("Cannot seek forward; at EOF
+                //   already.");
+                // }
 
-              if (this->last_read.count <= 0) {
-                this->last_read = this->inflater.read(this->source);
-              }
-              std::int64_t read_count = std::min(amount_left, this->last_read.count)
-              this->last_read.data += read_count;
-              this->last_read.count -= read_count;
-              this->position_in_uncompressed_file += read_count;
-              result += read_count;
-              amount_left -= read_count;
+                if (this->last_read.count <= 0) {
+                    this->last_read = this->inflater.read(this->source);
+                }
+                std::int64_t read_count
+                        = std::min(amount_left, this->last_read.count);
+                this->last_read.data += read_count;
+                this->last_read.count -= read_count;
+                this->position_in_uncompressed_file += read_count;
+                result += read_count;
+                amount_left -= read_count;
             }
             return result;
         }
@@ -170,24 +174,25 @@ namespace {
                          std::size_t object_count) {
             std::size_t result = 0;
             std::int64_t amount_left = object_size * object_count;
-            void * write_ptr = dst;
+            char *write_ptr = (char *)dst;
 
-            while(amount_left > 0 && !this->last_read.eof) {
-              if (this->last_read.count <= 0) {
-                this->last_read = this->inflater.read(this->source);
-              }
-              std::int64_t read_count = std::min(amount_left, this->last_read.count);
+            while (amount_left > 0 && !this->last_read.eof) {
+                if (this->last_read.count <= 0) {
+                    this->last_read = this->inflater.read(this->source);
+                }
+                std::int64_t read_count
+                        = std::min(amount_left, this->last_read.count);
 
-              std::memcpy(write_ptr, this->last_read.data, read_count);
-              write_ptr += read_count;
-              this->last_read.data += read_count;
-              this->last_read.count -= read_count;
-              this->position_in_uncompressed_file += read_count;
-              result += read_count;
-              amount_left -= read_count;
+                std::memcpy(write_ptr, this->last_read.data, read_count);
+                write_ptr += read_count;
+                this->last_read.data += read_count;
+                this->last_read.count -= read_count;
+                this->position_in_uncompressed_file += read_count;
+                result += read_count;
+                amount_left -= read_count;
             }
 
-            return result;
+            return result / object_size;
         }
     };
 
@@ -372,13 +377,13 @@ ZipFile::~ZipFile() {
 /* Opens a resource for reading. */
 sdl::RWops ZipFile::load(const char *file) {
     if (open_files.size() != 0) {
-        LP3_RSRC_LOG_ERROR("ERROR! A new ZipFile is being loaded, but the file is currently being used to read another zipfile.");
+        LP3_RSRC_LOG_ERROR("ERROR! A new ZipFile is being loaded, but the file "
+                           "is currently being used to read another zipfile.");
         for (const auto f : open_files) {
             LP3_RSRC_LOG_ERROR("\tFile: ", f);
         }
         throw std::runtime_error("Concurrent zip file read error!");
     }
-
 
     std::string search{file};
     auto result = std::find_if(
@@ -429,21 +434,13 @@ sdl::RWops ZipFile::load(const char *file) {
         LP3_RSRC_LOG_ERROR("Unsupported compression method");
         throw std::runtime_error("unsupported compression method");
     } else {
-        // CompressedFileArgs args;
-        //   std::string file_str(file);
-        //   args.file_name = &file_str;
-        //   args.tracker = &this->open_files;
-        //   args.zip_file = &this->actual_file;
-        //   args.zip_file_starting_position = result->offset_to_file +
-        //   header.real_size(); args.zip_compressed_max_size =
-        //   header.compressed_file_size;
+#ifndef GOOD_AND_PURE
+        auto cf = std::make_unique<CompressedFile>(
+                file, this->open_files, this->actual_file,
+                header.compressed_file_size, header.uncompressed_file_size);
 
-        //   auto uf = std::make_unique<CompressedFile>(args);
-        auto uf = std::make_unique<CompressedFile>(
-          file, this->open_files, this->actual_file, header.compressed_file_size, header.uncompressed_file_size);
-
-
-
+        return SDL_RWopsFuncs<CompressedFile>::create_sdlrwops(std::move(cf));
+#else
 
         auto uf = std::make_unique<UncompressedFile>(
                 file, this->open_files, header.uncompressed_file_size);
@@ -476,6 +473,7 @@ sdl::RWops ZipFile::load(const char *file) {
         }
 
         return SDL_RWopsFuncs<UncompressedFile>::create_sdlrwops(std::move(uf));
+#endif
     }
 }
 

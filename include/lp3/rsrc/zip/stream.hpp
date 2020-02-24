@@ -20,11 +20,11 @@ namespace lp3::rsrc::zip {
 // ----------------------------------------------------------------------------
 class ZipStreamSource {
   public:
-    virtual ~ZipStreamSource() {}
+    virtual inline ~ZipStreamSource() {}
 
     // This is initally false, and turns to true when the data is all out.
     // Calls to `read_data` after that are not allowed.
-    virtual bool eof();
+    virtual bool eof() = 0;
 
     // Writes at most max_size bytes to the array pointed to by dst.
     // Returns amount written.
@@ -43,8 +43,10 @@ class ZipStreamSource {
 class ZipStreamInflater {
   public:
     ZipStreamInflater(std::int64_t compressed_buffer_size,
-                    std::int64_t uncompressed_buffer_size);
-
+                      std::int64_t uncompressed_buffer_size);
+    ZipStreamInflater(ZipStreamInflater &&rhs) = default;
+    ZipStreamInflater(const ZipStreamInflater &rhs) = delete;
+    ZipStreamInflater &operator=(const ZipStreamInflater &&rhs) = delete;
     ~ZipStreamInflater();
 
     struct ReadResult {

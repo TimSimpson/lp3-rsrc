@@ -124,7 +124,7 @@ namespace {
                        lp3::sdl::RWops &actual_file, std::int64_t size_left_arg,
                        std::int64_t uncompressed_file_size_arg)
             : source(file_name, tracker_arg, actual_file, size_left_arg),
-              inflater(2048, 2048),
+              inflater(1024 * 1024, 1024 * 1024),
               compressed_file_size(size_left_arg),
               uncompressed_file_size(uncompressed_file_size_arg),
               position_in_uncompressed_file(0),
@@ -180,16 +180,20 @@ namespace {
                 if (this->last_read.count <= 0) {
                     this->last_read = this->inflater.read(this->source);
                 }
-                std::int64_t read_count
+                const std::int64_t read_count
                         = std::min(amount_left, this->last_read.count);
 
-                std::memcpy(write_ptr, this->last_read.data, read_count);
+                // TODO: double check if cpp reference says overlapping is OK
+                // here.
+                std::memmove(write_ptr, this->last_read.data, read_count);
                 write_ptr += read_count;
                 this->last_read.data += read_count;
                 this->last_read.count -= read_count;
                 this->position_in_uncompressed_file += read_count;
                 result += read_count;
                 amount_left -= read_count;
+                LP3_RSRC_LOG_ERROR("-read {} ({}/{})\n", read_count,
+                                   amount_left, object_size * object_count);
             }
 
             return result / object_size;

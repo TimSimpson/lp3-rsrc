@@ -15,8 +15,22 @@ namespace {
 #ifndef NODERAWFS
             // mount the current folder as a NODEFS instance
             // inside of emscripten
-            EM_ASM(FS.mkdir('/cwd'); FS.mount(NODEFS, {root : '.'}, '/cwd');
-                   FS.mkdir('/root'); FS.mount(NODEFS, {root : '/'}, '/root'););
+            // clang-format off
+            EM_ASM(
+                try{
+                    // TODO: solve this cleaner -
+                    // See if an "exists" method is in there.
+                    // https://emscripten.org/docs/api_reference/Filesystem-API.html#FS.mount
+                    FS.mkdir('/cwd');
+                    FS.mount(NODEFS, {root : '.'}, '/cwd');
+                    FS.mkdir('/root');
+                    FS.mount(NODEFS, {root : '/'}, '/root');
+                } catch(error) {
+                    // Ignore errors that might happen from somehow calling
+                    // this twice.
+                }
+            );
+            // clang-format on
 #endif
         }
 

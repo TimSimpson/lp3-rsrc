@@ -212,7 +212,7 @@ namespace {
             return get_file(rwops)->size();
         }
 
-        static std::int64_t seek(SDL_RWops *rwops, const long amount,
+        static std::int64_t seek(SDL_RWops *rwops, const std::int64_t amount,
                                  const int whence) {
             SDL_assert(rwops != nullptr);
             return get_file(rwops)->seek(amount, whence);

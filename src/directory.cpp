@@ -2,11 +2,60 @@
 
 #include <fmt/format.h>
 
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+#endif
+
 namespace lp3::rsrc {
+
+namespace {
+#if defined(__EMSCRIPTEN__)
+    struct EnsureNodeInitialized {
+        EnsureNodeInitialized() {
+#ifndef NODERAWFS
+            // mount the current folder as a NODEFS instance
+            // inside of emscripten
+            EM_ASM(FS.mkdir('/cwd'); FS.mount(NODEFS, {root : '.'}, '/cwd');
+                   FS.mkdir('/root'); FS.mount(NODEFS, {root : '/'}, '/root'););
+#endif
+        }
+
+        std::string parse_dir(const std::string &dir) {
+#ifndef NODERAWFS
+            // clang-format off
+            const int is_node = EM_ASM_INT(
+                return (
+                    (typeof process === 'object'
+                        && typeof process.versions === 'object'
+                        && typeof process.versions.node !== 'undefined')
+                    ? 1 : 0
+                );
+            );
+            // clang-format on
+            if (is_node) {
+                if (dir.length() > 0 && dir[0] != '/') {
+                    return "/cwd/" + dir;
+                } else {
+                    return "/root/" + dir;
+                }
+            }
+#endif
+            return dir;
+        }
+
+    } initialize_on_load;
+#endif
+} // namespace
 
 LP3_RSRC_API
 Directory::Directory(const std::string &_base_directory)
-    : base_directory(_base_directory) {}
+#ifndef __EMSCRIPTEN__
+    : base_directory(_base_directory) {
+}
+#else
+    : base_directory(initialize_on_load.parse_dir(_base_directory)) {
+}
+#endif
 
 LP3_RSRC_API
 sdl::RWops Directory::load(const char *file) {

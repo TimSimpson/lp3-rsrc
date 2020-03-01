@@ -21,6 +21,10 @@ class Lp3Rsrc(conans.ConanFile):
         "Lp3-Sdl/1.0.1@TimSimpson/testing"
     ]
 
+    test_requires = [
+        "catch2/2.4.1@bincrafters/stable",
+    ]
+
     build_requires = (
         "catch2/2.4.1@bincrafters/stable"
     )
@@ -30,10 +34,18 @@ class Lp3Rsrc(conans.ConanFile):
         "src/*", "include/*", "demos/*", "tests/*", "CMakeLists.txt"
     )
 
+    @property
+    def tests_enabled(self):
+        return (
+            self.develop
+            and (os.environ.get("CONAN_SKIP_TESTS") or "").lower() != 'true'
+        )
+
     def _configed_cmake(self):
         cmake = conans.CMake(self)
         cmake.configure(defs={
-            "CMAKE_FIND_PACKAGE_PREFER_CONFIG":"TRUE",
+            "CMAKE_FIND_PACKAGE_PREFER_CONFIG": True,
+            "LP3_SDL_Build_Tests": self.tests_enabled,
         })
         return cmake
 

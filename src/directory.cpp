@@ -37,14 +37,14 @@ namespace {
         std::string parse_dir(const std::string &dir) {
 #ifndef NODERAWFS
             // clang-format off
-            const int is_node = EM_ASM_INT(
+            const bool is_node = EM_ASM_INT(
                 return (
                     (typeof process === 'object'
                         && typeof process.versions === 'object'
                         && typeof process.versions.node !== 'undefined')
                     ? 1 : 0
                 );
-            );
+            ) == 1;
             // clang-format on
             if (is_node) {
                 if (dir.length() > 0 && dir[0] != '/') {

@@ -8,7 +8,7 @@
 #include <catch2/catch.hpp>
 
 TEST_CASE("Read file", "[read_a_file]") {
-    lp3::rsrc::Directory dir{"/working/resources"};
+    lp3::rsrc::Directory dir{"resources"};
     lp3::rsrc::Directory dir2 = dir.sub_directory("text");
     auto story = dir2.load("story.txt");
     char content[16];

@@ -11,8 +11,12 @@
 using namespace lp3::rsrc;
 
 int main(int argc, char **argv) {
-    lp3::rsrc::Directory dir("resources/text");
-    auto file = dir.load("story.zip");
+    if (argc != 2) {
+        fmt::print("Usage: {} <zipfile>\n", argc > 0 ? argv[0] : "zip_ls");
+        return 1;
+    }
+    lp3::rsrc::Directory dir(".");
+    auto file = dir.load(argv[1]);
 
     auto result = load_directory_info(file);
     if (!result) {

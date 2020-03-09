@@ -82,8 +82,8 @@ endif()
 #     )
 # endif()
 
-add_executable(zip_ls ${CMAKE_CURRENT_SOURCE_DIR}/apps/zip_ls.cpp)
-target_link_libraries(zip_ls lp3_rsrc)
+add_executable(zip_info ${CMAKE_CURRENT_SOURCE_DIR}/apps/zip_info.cpp)
+target_link_libraries(zip_info lp3_rsrc)
 
 add_executable(unzip ${CMAKE_CURRENT_SOURCE_DIR}/apps/unzip.cpp)
 target_link_libraries(unzip lp3_rsrc)

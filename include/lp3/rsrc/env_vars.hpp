@@ -8,7 +8,7 @@
 
 namespace lp3::rsrc {
 
-std::optional<std::string> get_env_var(const char *name);
+std::optional<std::string> get_env_var(const char * name);
 
 }
 

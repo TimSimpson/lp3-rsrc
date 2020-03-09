@@ -66,7 +66,7 @@ struct CentralDirectoryHeader {
     std::uint32_t relative_offset_of_local_header_from_start_of_first_disk;
 
     std::string_view get_name() const {
-        char *ptr = (char *)(this + 1);
+        char * ptr = (char *)(this + 1);
         return std::string_view(ptr, this->file_name_length);
     }
 
@@ -113,15 +113,16 @@ struct LoadedDirectoryInfo {
     std::vector<CentralDirectoryHeader *> directories;
 };
 
-std::optional<LoadedDirectoryInfo> load_directory_info(lp3::sdl::RWops &file);
+std::optional<LoadedDirectoryInfo> load_directory_info(lp3::sdl::RWops & file);
 
 } // namespace lp3::rsrc
 
 template <> struct fmt::formatter<lp3::rsrc::FileHeader> {
-    constexpr auto parse(format_parse_context &ctx) { return ctx.begin(); }
+    constexpr auto parse(format_parse_context & ctx) { return ctx.begin(); }
 
     template <typename FormatContext>
-    auto format(const lp3::rsrc::FileHeader &file_header, FormatContext &ctx) {
+    auto format(const lp3::rsrc::FileHeader & file_header,
+                FormatContext & ctx) {
         format_to(ctx.out(), "{{ signature={0}{1}{2}{3}, ",
                   file_header.signature[0], file_header.signature[1],
                   file_header.signature[2], file_header.signature[3]);
@@ -142,11 +143,11 @@ template <> struct fmt::formatter<lp3::rsrc::FileHeader> {
 };
 
 template <> struct fmt::formatter<lp3::rsrc::CentralDirectoryHeader> {
-    constexpr auto parse(format_parse_context &ctx) { return ctx.begin(); }
+    constexpr auto parse(format_parse_context & ctx) { return ctx.begin(); }
 
     template <typename FormatContext>
-    auto format(const lp3::rsrc::CentralDirectoryHeader &s,
-                FormatContext &ctx) {
+    auto format(const lp3::rsrc::CentralDirectoryHeader & s,
+                FormatContext & ctx) {
         format_to(ctx.out(), "{{ signature={0}{1}{2}{3}, ", s.signature[0],
                   s.signature[1], s.signature[2], s.signature[3]);
         format_to(ctx.out(), "version_made_by={}, ", s.version_made_by);
@@ -179,11 +180,11 @@ template <> struct fmt::formatter<lp3::rsrc::CentralDirectoryHeader> {
 };
 
 template <> struct fmt::formatter<lp3::rsrc::EndOfDirectoryStructure> {
-    constexpr auto parse(format_parse_context &ctx) { return ctx.begin(); }
+    constexpr auto parse(format_parse_context & ctx) { return ctx.begin(); }
 
     template <typename FormatContext>
-    auto format(const lp3::rsrc::EndOfDirectoryStructure &s,
-                FormatContext &ctx) {
+    auto format(const lp3::rsrc::EndOfDirectoryStructure & s,
+                FormatContext & ctx) {
         format_to(ctx.out(), "{{ signature={0}{1}{2}{3}, ", s.signature[0],
                   s.signature[1], s.signature[2], s.signature[3]);
         format_to(ctx.out(), "number_of_this_disk={}, ", s.number_of_this_disk);

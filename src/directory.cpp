@@ -34,7 +34,7 @@ namespace {
 #endif
         }
 
-        std::string parse_path(const std::string &path) {
+        std::string parse_path(const std::string & path) {
 #ifndef NODERAWFS
             // clang-format off
             const bool is_node = EM_ASM_INT(
@@ -59,13 +59,15 @@ namespace {
 
     } initialize_on_load;
 
-    std::string get_full_path(const std::string & base_directory, const std::string & file) {
+    std::string get_full_path(const std::string & base_directory,
+                              const std::string & file) {
         const std::string result = fmt::format("{}/{}", base_directory, file);
         return initialize_on_load.parse_path(result);
     }
 
 #else
-    std::string get_full_path(const std::string & base_directory, const std::string & file) {
+    std::string get_full_path(const std::string & base_directory,
+                              const std::string & file) {
         return fmt::format("{}/{}", base_directory, file);
     }
 
@@ -73,15 +75,14 @@ namespace {
 } // namespace
 
 LP3_RSRC_API
-Directory::Directory(const std::string &_base_directory)
-: base_directory(_base_directory) {
-}
+Directory::Directory(const std::string & _base_directory)
+    : base_directory(_base_directory) {}
 
 LP3_RSRC_API
-sdl::RWops Directory::load(const char *file) {
+sdl::RWops Directory::load(const char * file) {
     const auto full_path = get_full_path(base_directory, file);
 
-    SDL_RWops *ptr = SDL_RWFromFile(full_path.c_str(), "rb");
+    SDL_RWops * ptr = SDL_RWFromFile(full_path.c_str(), "rb");
     if (!ptr) {
         const auto error_msg = fmt::format("Error opening file {}: {}",
                                            full_path.c_str(), SDL_GetError());
@@ -92,9 +93,9 @@ sdl::RWops Directory::load(const char *file) {
 }
 
 LP3_RSRC_API
-sdl::RWops Directory::save(const char *file) {
+sdl::RWops Directory::save(const char * file) {
     const auto full_path = get_full_path(base_directory, file);
-    SDL_RWops *ptr = SDL_RWFromFile(full_path.c_str(), "wb");
+    SDL_RWops * ptr = SDL_RWFromFile(full_path.c_str(), "wb");
     if (!ptr) {
         const auto error_msg = fmt::format("Error opening writable file {}: {}",
                                            full_path.c_str(), SDL_GetError());
@@ -104,7 +105,7 @@ sdl::RWops Directory::save(const char *file) {
 }
 
 LP3_RSRC_API
-Directory Directory::sub_directory(const char *sub_d) {
+Directory Directory::sub_directory(const char * sub_d) {
     const auto full_path = fmt::format("{}/{}", base_directory, sub_d);
     Directory subm(full_path);
     return subm;

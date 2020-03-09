@@ -11,9 +11,10 @@
 
 using namespace lp3::rsrc;
 
-int main(int argc, char **argv) {
+int main(int argc, char ** argv) {
     if (argc != 3) {
-        fmt::print("Usage: {} <zipfile> <interior file to unzip>\n", argc > 0 ? argv[0] : "unzip");
+        fmt::print("Usage: {} <zipfile> <interior file to unzip>\n",
+                   argc > 0 ? argv[0] : "unzip");
         return 1;
     }
     lp3::rsrc::Directory dir(".");
@@ -25,7 +26,7 @@ int main(int argc, char **argv) {
         std::cout << contents << "\n";
         return 0;
     } else {
-        std::cerr <<  "Something bad happened. :(\n";
+        std::cerr << "Something bad happened. :(\n";
         return 1;
     }
 }

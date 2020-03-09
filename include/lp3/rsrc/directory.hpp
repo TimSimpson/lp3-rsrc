@@ -16,16 +16,16 @@ namespace lp3::rsrc {
 // ----------------------------------------------------------------------------
 class LP3_RSRC_API Directory : public RContainer, public WContainer {
   public:
-    Directory(const std::string &_base_directory);
+    Directory(const std::string & _base_directory);
 
     /* Opens a resource for reading. */
-    sdl::RWops load(const char *file) override;
+    sdl::RWops load(const char * file) override;
 
     /* Opens a resource for writing. */
-    sdl::RWops save(const char *file) override;
+    sdl::RWops save(const char * file) override;
 
     /* Opens a new Media Manager in a sub directory. */
-    Directory sub_directory(const char *sub_directory);
+    Directory sub_directory(const char * sub_directory);
 
   private:
     const std::string base_directory;

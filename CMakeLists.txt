@@ -144,14 +144,23 @@ function(define_tests)
 
     function(make_test exe_target)
         if("${CMAKE_SYSTEM_NAME}" MATCHES "Emscripten")
-            add_test(NAME "test_${exe_target}"
-                     COMMAND node $<TARGET_FILE:${exe_target}>
-                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-            target_compile_options(${exe_target} PUBLIC "SHELL:-s DISABLE_EXCEPTION_CATCHING=0 -s DEMANGLE_SUPPORT=1")
-            target_link_options(${exe_target} PUBLIC "SHELL:-s DISABLE_EXCEPTION_CATCHING=0 -s DEMANGLE_SUPPORT=1")
+            add_test(
+                NAME "test_${exe_target}"
+                COMMAND node $<TARGET_FILE:${exe_target}>
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+            target_compile_options(
+                ${exe_target}
+                PUBLIC
+                    "SHELL:-s DISABLE_EXCEPTION_CATCHING=0 -s DEMANGLE_SUPPORT=1"
+            )
+            target_link_options(
+                ${exe_target} PUBLIC
+                "SHELL:-s DISABLE_EXCEPTION_CATCHING=0 -s DEMANGLE_SUPPORT=1")
         else()
-            add_test(NAME "test_${exe_target}" COMMAND ${exe_target}
-                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+            add_test(
+                NAME "test_${exe_target}"
+                COMMAND ${exe_target}
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
         endif()
     endfunction()
 
@@ -165,7 +174,6 @@ function(define_tests)
     target_link_libraries(unzip_tests lp3_rsrc Catch2::Catch2)
     make_test(unzip_tests)
 endfunction()
-
 
 if(BUILD_TESTING AND LP3_SDL_Build_Tests)
     # include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/tests.cmake)

@@ -12,7 +12,7 @@ using namespace lp3::rsrc;
 
 int main(int argc, char **argv) {
     if (argc != 2) {
-        fmt::print("Usage: {} <zipfile>\n", argc > 0 ? argv[0] : "zip_ls");
+        fmt::print("Usage: {} <zipfile>\n", argc > 0 ? argv[0] : "zip_info");
         return 1;
     }
     lp3::rsrc::Directory dir(".");
@@ -30,4 +30,5 @@ int main(int argc, char **argv) {
     for (auto *dir : info.directories) {
         fmt::print("{}\n\t{}\n", dir->get_name(), *dir);
     }
+    return 0;
 }

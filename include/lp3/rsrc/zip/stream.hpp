@@ -2,7 +2,6 @@
 #define FILE_LP3_RSRC_ZIP_STREAM_HPP
 #pragma once
 
-#include <fmt/format.h>
 #include <lp3/rsrc.hpp>
 #include <lp3/sdl.hpp>
 #include <string_view>

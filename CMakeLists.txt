@@ -102,10 +102,6 @@ file(
     WRITE "${PROJECT_BINARY_DIR}/Lp3_RsrcConfig.cmake"
     "
 include(CMakeFindDependencyMacro)
-if (NOT \"\${CMAKE_SYSTEM_NAME}\" MATCHES \"Emscripten\")
-    find_dependency(rsrc)
-    find_dependency(rsrc_image)
-endif()
 include(\"\${CMAKE_CURRENT_LIST_DIR}/Lp3_Rsrc-targets.cmake\")
 ")
 

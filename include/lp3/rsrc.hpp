@@ -5,5 +5,6 @@
 #include "rsrc/containers.hpp"
 #include "rsrc/directory.hpp"
 #include "rsrc/env_vars.hpp"
+#include "rsrc/ZipFile.hpp"
 
 #endif

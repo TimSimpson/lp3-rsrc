@@ -159,6 +159,11 @@ function(define_tests)
                    ${CMAKE_CURRENT_SOURCE_DIR}/tests/directory_tests.cpp)
     target_link_libraries(directory_tests lp3_rsrc Catch2::Catch2)
     make_test(directory_tests)
+
+    add_executable(unzip_tests
+                   ${CMAKE_CURRENT_SOURCE_DIR}/tests/unzip_tests.cpp)
+    target_link_libraries(unzip_tests lp3_rsrc Catch2::Catch2)
+    make_test(unzip_tests)
 endfunction()
 
 

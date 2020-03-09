@@ -53,22 +53,6 @@ class Lp3Rsrc(conans.ConanFile):
         cmake = self._configed_cmake()
         cmake.build()
 
-        if self.settings.os == "Emscripten":
-            # TODO: Make this work.
-            # May have to add
-            # set(CMAKE_CXX_FLAGS "-s DISABLE_EXCEPTION_CATCHING=0")
-            # to the root of CMakeLists.txt and turn on explicit support for
-            # NodeFS in the test:
-            # https://emscripten.org/docs/api_reference/Filesystem-API.html#filesystem-api-nodefs
-            # cmd = "node {}/directory_tests".format(self.build_folder)
-            # print(cmd)
-            # self.run(cmd)
-            pass
-        elif not self.options.shared:
-            # If SDL2 is shared, we won't be able to find it in most cases.
-            cmake.test()
-
-
     def package(self):
         cmake = self._configed_cmake()
         cmake.install()

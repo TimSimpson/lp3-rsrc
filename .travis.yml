@@ -1,0 +1,77 @@
+language: cpp
+
+clang-linux: &clang-linux
+  os: linux
+  dist: bionic
+  python: "3.7"
+  compiler: clang
+  addons:
+    apt:
+      sources:
+        - ubuntu-toolchain-r-test
+        - llvm-toolchain-trusty-8
+      packages:
+        - clang-8
+        - libstdc++-8-dev
+        - python3-pip
+
+emscripten: &emscripten
+  os: linux
+  dist: bionic
+  python: "3.7"
+  compiler: clang
+  addons:
+    apt:
+      packages:
+        - python3-pip
+
+osx: &osx
+   os: osx
+   language: generic
+   osx_image: xcode11.3
+
+install:
+  - git clone https://github.com/TimSimpson/ci-land.git ci
+  - pushd ci && git checkout 41f5b9a2ec3f4885fbd66144f4da7679cfaf2ee3 && popd
+  - ./ci/cpp/conan/travis/install.sh
+
+script:
+  - ./ci/cpp/conan/travis/run.sh
+
+matrix:
+  include:
+
+    - name: "Linux Clang 8.0 Release"
+      <<: *clang-linux
+      env:
+        - PROFILE=clang-8-r-static
+    - name: "Linux Clang 8.0 Debug"
+      <<: *clang-linux
+      env:
+        - PROFILE=clang-8-d-static
+    - name: "Emscripten WASM Release"
+      <<: *clang-linux
+      env:
+        - PROFILE=emscripten-w-r
+    - name: "Emscripten Javascript Debug"
+      <<: *clang-linux
+      env:
+        - PROFILE=emscripten-js-d
+
+    - name: "Docs"
+      language: python
+      os: linux
+      dist: bionic
+      python: "3.7"
+      addons:
+        apt:
+          packages:
+            - python3-pip
+            - pandoc
+      script:
+        - ./ci/cpp/conan/travis/docs.sh
+
+env:
+  global:
+    - CONAN_LOGIN_USERNAME=TimSimpson
+    - secure: R98MY/0BUy7mfIOXdg0xHaMSN7MU9xHSTiAoUVx7V103fw+apm09Gd36Sds1qFc8TwI4SLJYI1Wd4m8bxywRWoVWtHTCYabZ5cnblsxCeqbubRTVtfB50gva8xSMZynBmBF0bEATjDm3yDS9gDAChhZgjMWBtCmqbHZyAEeCzoFcuyAQzCisU05J1nh4Xf9DvKfYnVVQ7lsijyBMxvt/7Yjc5Qx8bPKiH+W8SYVwGRY7evXaekQL+EzWXJMCvHsbMmNE3ll5EFITAV3BByZxiK22fK4Fim7HLnYHLyJG/Aps93rziWhABja1rQrvib9GnscPfJlSFnWhNsp+Wd1t7iDBrAujQ+KgrE2RxJcgjt4OC+jiEp+A9bDpIyWnxq6x/AERC9YKX2at4M5Kw/tyirb7H/Xt88KJhUjlEc4AgULhwkN9ScZwwUxWgMnNu5IWqjfsoeA2qGORghCznfc3QojW8ybjhPQK30BfTeAP4gdlKQ37deh+lsrPVJkUFeAG5YmWh+rfgmh+Z+FZBoI49PkmpIPjuHJx5ZQxhGJ+C4igFXLTi3lYXvzGEtDP9TYFSmJfBg+bB3e7ugdd7/nox5CYnQabscS7JD6Od6RVlrAsZi8KdbusIEHYAf6Mvq5pYnk/iZMXVM3a0w5Sn+MJf84Pop7+RYx5lu/mZTWiMrw=

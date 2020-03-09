@@ -147,6 +147,8 @@ function(define_tests)
             add_test(NAME "test_${exe_target}"
                      COMMAND node $<TARGET_FILE:${exe_target}>
                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+            target_compile_options(${exe_target} PUBLIC "SHELL:-s DISABLE_EXCEPTION_CATCHING=0 -s DEMANGLE_SUPPORT=1")
+            target_link_options(${exe_target} PUBLIC "SHELL:-s DISABLE_EXCEPTION_CATCHING=0 -s DEMANGLE_SUPPORT=1")
         else()
             add_test(NAME "test_${exe_target}" COMMAND ${exe_target}
                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})

@@ -76,24 +76,6 @@ if(BUILD_SHARED_LIBS)
     endif()
 endif()
 
-# if ("${CMAKE_SYSTEM_NAME}" MATCHES "Emscripten")
-#     target_link_options(directory_tests PRIVATE
-#         "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/resources@/resources"
-#     )
-# endif()
-
-add_executable(zip_info ${CMAKE_CURRENT_SOURCE_DIR}/apps/zip_info.cpp)
-target_link_libraries(zip_info lp3_rsrc)
-
-add_executable(unzip ${CMAKE_CURRENT_SOURCE_DIR}/apps/unzip.cpp)
-target_link_libraries(unzip lp3_rsrc)
-
-add_executable(open_file ${CMAKE_CURRENT_SOURCE_DIR}/apps/open_file.cpp)
-target_link_libraries(open_file lp3_rsrc)
-
-# add_executable(open_file_ex ${CMAKE_CURRENT_SOURCE_DIR}/apps/open_file_ex.cpp)
-# target_link_libraries(open_file_ex lp3_rsrc)
-
 # *********************************************************************
 # Package / Install Stuff
 # *********************************************************************
@@ -142,6 +124,15 @@ install(FILES "${PROJECT_BINARY_DIR}/Lp3_RsrcConfig.cmake"
 function(define_tests)
     find_package(Catch2 CONFIG REQUIRED)
 
+    add_executable(zip_info ${CMAKE_CURRENT_SOURCE_DIR}/tests/zip_info.cpp)
+    target_link_libraries(zip_info lp3_rsrc)
+
+    add_executable(unzip ${CMAKE_CURRENT_SOURCE_DIR}/tests/unzip.cpp)
+    target_link_libraries(unzip lp3_rsrc)
+
+    add_executable(open_file ${CMAKE_CURRENT_SOURCE_DIR}/tests/open_file.cpp)
+    target_link_libraries(open_file lp3_rsrc)
+
     function(make_test exe_target)
         if("${CMAKE_SYSTEM_NAME}" MATCHES "Emscripten")
             add_test(
@@ -175,7 +166,7 @@ function(define_tests)
     make_test(unzip_tests)
 endfunction()
 
-if(BUILD_TESTING AND LP3_SDL_Build_Tests)
+if(BUILD_TESTING AND LP3_RSRC_Build_Tests)
     # include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/tests.cmake)
     define_tests()
 endif()

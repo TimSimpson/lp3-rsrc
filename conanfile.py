@@ -45,7 +45,7 @@ class Lp3Rsrc(conans.ConanFile):
         cmake = conans.CMake(self)
         cmake.configure(defs={
             "CMAKE_FIND_PACKAGE_PREFER_CONFIG": True,
-            "LP3_SDL_Build_Tests": self.tests_enabled,
+            "LP3_RSRC_Build_Tests": self.tests_enabled,
         })
         return cmake
 

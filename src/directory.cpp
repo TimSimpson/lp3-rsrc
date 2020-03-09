@@ -65,7 +65,7 @@ namespace {
     }
 
 #else
-    std::string full_path(const std::string & base_directory, const std::string & file) {
+    std::string get_full_path(const std::string & base_directory, const std::string & file) {
         return fmt::format("{}/{}", base_directory, file);
     }
 

@@ -12,7 +12,6 @@ clang-linux: &clang-linux
         - llvm-toolchain-trusty-8
       packages:
         - clang-8
-        - libstdc++-8-dev
         - python3-pip
 
 emscripten: &emscripten

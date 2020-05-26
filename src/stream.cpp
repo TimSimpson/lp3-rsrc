@@ -1,5 +1,5 @@
-
 #include <lp3/rsrc/zip/stream.hpp>
+#include <cstring>
 
 namespace lp3::rsrc::zip {
 

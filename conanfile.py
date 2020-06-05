@@ -44,11 +44,13 @@ class Lp3Rsrc(conans.ConanFile):
     def _configed_cmake(self):
         cmake = conans.CMake(self)
         kwargs = {}
-        if self.install_folder and self.build_folder and self.install_folder != self.build_folder:
-             kwargs['args'] = ['-DCONAN_INSTALL_FOLDER={}'.format(self.install_folder)]
-            #kwargs['args'] = ['-DCMAKE_TOOLCHAIN_FILE={}/conan_paths.cmake'.format(self.install_folder)]
+        if (self.install_folder and self.build_folder
+            and self.install_folder != self.build_folder):
+                kwargs['args'] = [
+                    '-DCONAN_INSTALL_FOLDER={}'.format(self.install_folder)
+                ]
+
         cmake.configure(
-            # args="-DCMAKE_TOOLCHAIN_FILE=conan_paths.cmake"
             defs={
                 "CMAKE_FIND_PACKAGE_PREFER_CONFIG": True,
                 "LP3_RSRC_Build_Tests": self.tests_enabled,

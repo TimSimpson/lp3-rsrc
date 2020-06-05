@@ -11,21 +11,22 @@ include(CTest)
 include("${CMAKE_BINARY_DIR}/conan_paths.cmake" OPTIONAL
         RESULT_VARIABLE using_conan)
 
-include("${CMAKE_BINARY_DIR}/conan_paths.cmake" OPTIONAL
-        RESULT_VARIABLE using_conan)
 if(NOT using_conan)
-    include("${CMAKE_MODULE_PATH}/conan_paths.cmake" OPTIONAL
-            RESULT_VARIABLE using_conan)
+    option(CONAN_INSTALL_FOLDER "path to conan paths")
+    include("${CONAN_INSTALL_FOLDER}/conan_paths.cmake" OPTIONAL
+            RESULT_VARIABLE using_conan_2)
 endif()
 if(using_conan)
     set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
 endif()
 
+# message(FATAL_ERROR "using_conan = ${using_conan}\n" "using_conan_2 = ${using_conan_2}\n" "CONAN_INSTALL_FOLDER=${CONAN_INSTALL_FOLDER}\n" "CMAKE_BINARY_DIR=${CMAKE_BINARY_DIR}\n" "CMAKE_MODULE_PATH=${CMAKE_MODULE_PATH}")
+
 get_directory_property(is_child PARENT_DIRECTORY)
 option(LP3_RSRC_Build_Tests "Build tests when BUILD_TESTING is enabled."
        $<NOT:${is_child}>)
 
-find_package(ZLIB REQUIRED)
+find_package(ZLIB REQUIRED )
 find_package(fmt REQUIRED)
 find_package(Lp3_Sdl CONFIG REQUIRED)
 

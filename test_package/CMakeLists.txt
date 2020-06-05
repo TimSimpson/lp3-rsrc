@@ -7,6 +7,7 @@ include(${CMAKE_BINARY_DIR}/conan_paths.cmake)
 
 # TODO: Find aa way to make the CMake package config bring this in
 # automatically.
+find_package(ZLIB REQUIRED)
 find_package(fmt REQUIRED)
 find_package(Lp3_Main CONFIG REQUIRED)
 find_package(Lp3_Sdl CONFIG REQUIRED)

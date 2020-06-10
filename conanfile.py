@@ -16,7 +16,7 @@ class Lp3Rsrc(conans.ConanFile):
     default_options = {"shared": False}
 
     requires = [
-        "zlib/1.2.11@conan/stable",
+        "zlib/1.2.11",
         "fmt/6.1.2",
         "Lp3-Sdl/1.0.3@TimSimpson/testing"
     ]

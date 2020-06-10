@@ -18,7 +18,7 @@ class Lp3Rsrc(conans.ConanFile):
     requires = [
         "zlib/1.2.11@conan/stable",
         "fmt/6.1.2",
-        "Lp3-Sdl/1.0.1@TimSimpson/testing"
+        "Lp3-Sdl/1.0.3@TimSimpson/testing"
     ]
 
     test_requires = [

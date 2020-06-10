@@ -8,14 +8,13 @@ class TestPackage(conans.ConanFile):
 
     requires = (
 # ~end-doc
-         "Lp3-Main/1.0.1@TimSimpson/testing",
+         "Lp3-Main/1.0.2@TimSimpson/testing",
          "zlib/1.2.11",
 # ~start-doc
-         "Lp3-Sdl/1.0.1@TimSimpson/testing"
+         "Lp3-Sdl/1.0.3@TimSimpson/testing"
     )
 
     sdl2_requires = (
-        "sdl2/2.0.9@bincrafters/stable",
         "sdl2_image/2.0.5@bincrafters/stable",
     )
 

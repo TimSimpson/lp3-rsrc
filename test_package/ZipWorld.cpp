@@ -2,13 +2,13 @@
 // This example shows using `lp3::sdl`'s helper classes to create
 // a simple app.
 // --------------------------------------------------------------------
-#include <SDL_image.h>
 #include <fstream>
 #include <iostream>
 #include <lp3/main.hpp>
 #include <lp3/rsrc.hpp>
 #include <lp3/sdl.hpp>
 #include <memory>
+#include <SDL_image.h>
 
 namespace sdl = lp3::sdl;
 

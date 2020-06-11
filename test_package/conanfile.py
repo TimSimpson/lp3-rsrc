@@ -8,7 +8,7 @@ class TestPackage(conans.ConanFile):
 
     requires = (
 # ~end-doc
-         "Lp3-Main/1.0.2@TimSimpson/testing",
+         "Lp3-Main/1.0.3@TimSimpson/testing",
          "zlib/1.2.11",
 # ~start-doc
          "Lp3-Sdl/1.0.3@TimSimpson/testing"

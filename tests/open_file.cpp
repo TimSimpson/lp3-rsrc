@@ -4,7 +4,7 @@
 
 namespace rsrc = lp3::rsrc;
 
-int main(const int argc, const char **argv) {
+int main(const int argc, const char ** argv) {
     fmt::print("Hi\n");
 
     rsrc::Directory dir{"."};

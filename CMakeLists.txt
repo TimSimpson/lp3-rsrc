@@ -2,23 +2,31 @@
 # LP3_RSRC
 #       Handles very rudimentary, basic stuff all the other libs need.
 # *********************************************************************
-project(Lp3_Rsrc CXX)
 cmake_minimum_required(VERSION 3.9.0 FATAL_ERROR)
-include(CMakePackageConfigHelpers)
+project(Lp3_Rsrc CXX)
 
-enable_testing()
+include(CMakePackageConfigHelpers)
+include(CTest)
 
 include("${CMAKE_BINARY_DIR}/conan_paths.cmake" OPTIONAL
         RESULT_VARIABLE using_conan)
 
+if(NOT using_conan)
+    option(CONAN_INSTALL_FOLDER "path to conan paths")
+    include("${CONAN_INSTALL_FOLDER}/conan_paths.cmake" OPTIONAL
+            RESULT_VARIABLE using_conan)
+endif()
 if(using_conan)
     set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
 endif()
 
+get_directory_property(is_child PARENT_DIRECTORY)
+option(LP3_RSRC_Build_Tests "Build tests when BUILD_TESTING is enabled."
+       $<NOT:${is_child}>)
+
 find_package(ZLIB REQUIRED)
 find_package(fmt REQUIRED)
 find_package(Lp3_Sdl CONFIG REQUIRED)
-find_package(Catch2 CONFIG REQUIRED)
 
 add_library(
     lp3_rsrc
@@ -67,29 +75,6 @@ if(BUILD_SHARED_LIBS)
     endif()
 endif()
 
-add_executable(directory_tests
-               ${CMAKE_CURRENT_SOURCE_DIR}/tests/directory_tests.cpp)
-target_link_libraries(directory_tests lp3_rsrc Catch2::Catch2)
-add_test(directory_tests directory_tests
-         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-# if ("${CMAKE_SYSTEM_NAME}" MATCHES "Emscripten")
-#     target_link_options(directory_tests PRIVATE
-#         "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/resources@/resources"
-#     )
-# endif()
-
-add_executable(zip_ls ${CMAKE_CURRENT_SOURCE_DIR}/apps/zip_ls.cpp)
-target_link_libraries(zip_ls lp3_rsrc)
-
-add_executable(unzip ${CMAKE_CURRENT_SOURCE_DIR}/apps/unzip.cpp)
-target_link_libraries(unzip lp3_rsrc)
-
-add_executable(open_file ${CMAKE_CURRENT_SOURCE_DIR}/apps/open_file.cpp)
-target_link_libraries(open_file lp3_rsrc)
-
-# add_executable(open_file_ex ${CMAKE_CURRENT_SOURCE_DIR}/apps/open_file_ex.cpp)
-# target_link_libraries(open_file_ex lp3_rsrc)
-
 # *********************************************************************
 # Package / Install Stuff
 # *********************************************************************
@@ -116,10 +101,6 @@ file(
     WRITE "${PROJECT_BINARY_DIR}/Lp3_RsrcConfig.cmake"
     "
 include(CMakeFindDependencyMacro)
-if (NOT \"\${CMAKE_SYSTEM_NAME}\" MATCHES \"Emscripten\")
-    find_dependency(rsrc)
-    find_dependency(rsrc_image)
-endif()
 include(\"\${CMAKE_CURRENT_LIST_DIR}/Lp3_Rsrc-targets.cmake\")
 ")
 
@@ -135,6 +116,55 @@ install(FILES "${PROJECT_BINARY_DIR}/Lp3_RsrcConfig.cmake"
 # *********************************************************************
 # Tests and Drivers / Demos
 # *********************************************************************
+function(define_tests)
+    find_package(Catch2 CONFIG REQUIRED)
+
+    add_executable(zip_info ${CMAKE_CURRENT_SOURCE_DIR}/tests/zip_info.cpp)
+    target_link_libraries(zip_info lp3_rsrc)
+
+    add_executable(unzip ${CMAKE_CURRENT_SOURCE_DIR}/tests/unzip.cpp)
+    target_link_libraries(unzip lp3_rsrc)
+
+    add_executable(open_file ${CMAKE_CURRENT_SOURCE_DIR}/tests/open_file.cpp)
+    target_link_libraries(open_file lp3_rsrc)
+
+    function(make_test exe_target)
+        if("${CMAKE_SYSTEM_NAME}" MATCHES "Emscripten")
+            add_test(
+                NAME "test_${exe_target}"
+                COMMAND node $<TARGET_FILE:${exe_target}>
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+            target_compile_options(
+                ${exe_target}
+                PUBLIC
+                    "SHELL:-s DISABLE_EXCEPTION_CATCHING=0 -s DEMANGLE_SUPPORT=1"
+            )
+            target_link_options(
+                ${exe_target} PUBLIC
+                "SHELL:-s DISABLE_EXCEPTION_CATCHING=0 -s DEMANGLE_SUPPORT=1")
+        else()
+            add_test(
+                NAME "test_${exe_target}"
+                COMMAND ${exe_target}
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+        endif()
+    endfunction()
+
+    add_executable(directory_tests
+                   ${CMAKE_CURRENT_SOURCE_DIR}/tests/directory_tests.cpp)
+    target_link_libraries(directory_tests lp3_rsrc Catch2::Catch2)
+    make_test(directory_tests)
+
+    add_executable(unzip_tests
+                   ${CMAKE_CURRENT_SOURCE_DIR}/tests/unzip_tests.cpp)
+    target_link_libraries(unzip_tests lp3_rsrc Catch2::Catch2)
+    make_test(unzip_tests)
+endfunction()
+
+if(BUILD_TESTING AND LP3_RSRC_Build_Tests)
+    # include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/tests.cmake)
+    define_tests()
+endif()
 
 get_directory_property(is_child PARENT_DIRECTORY)
 if(NOT is_child)

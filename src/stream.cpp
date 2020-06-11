@@ -1,4 +1,4 @@
-
+#include <cstring>
 #include <lp3/rsrc/zip/stream.hpp>
 
 namespace lp3::rsrc::zip {
@@ -49,7 +49,8 @@ void ZipStreamInflater::close(bool can_throw) {
     }
 }
 
-void ZipStreamInflater::ensure_compressed_buffer_full(ZipStreamSource &source) {
+void ZipStreamInflater::ensure_compressed_buffer_full(
+        ZipStreamSource & source) {
     if (this->compressed_data_available >= this->compressed.size()) {
         // Buffer is full, so just return.
         return;
@@ -65,7 +66,7 @@ void ZipStreamInflater::ensure_compressed_buffer_full(ZipStreamSource &source) {
         }
     }
 
-    char *start_at = this->compressed.data() + this->compressed_data_available;
+    char * start_at = this->compressed.data() + this->compressed_data_available;
     auto max = this->compressed.size() - this->compressed_data_available;
 
     // The first step: completely fill compressed buffer.
@@ -73,7 +74,8 @@ void ZipStreamInflater::ensure_compressed_buffer_full(ZipStreamSource &source) {
     this->compressed_data_available = this->compressed_data_available + result;
 }
 
-ZipStreamInflater::ReadResult ZipStreamInflater::read(ZipStreamSource &source) {
+ZipStreamInflater::ReadResult
+ZipStreamInflater::read(ZipStreamSource & source) {
     if (closed) {
         return EOF_RESULT;
     }

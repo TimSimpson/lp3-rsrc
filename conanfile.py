@@ -16,9 +16,13 @@ class Lp3Rsrc(conans.ConanFile):
     default_options = {"shared": False}
 
     requires = [
-        "zlib/1.2.11@conan/stable",
+        "zlib/1.2.11",
         "fmt/6.1.2",
-        "Lp3-Sdl/1.0.1@TimSimpson/testing"
+        "Lp3-Sdl/1.0.3@TimSimpson/testing"
+    ]
+
+    test_requires = [
+        "catch2/2.4.1@bincrafters/stable",
     ]
 
     build_requires = (
@@ -30,32 +34,34 @@ class Lp3Rsrc(conans.ConanFile):
         "src/*", "include/*", "demos/*", "tests/*", "CMakeLists.txt"
     )
 
+    @property
+    def tests_enabled(self):
+        return (
+            self.develop
+            and (os.environ.get("CONAN_SKIP_TESTS") or "").lower() != 'true'
+        )
+
     def _configed_cmake(self):
         cmake = conans.CMake(self)
-        cmake.configure(defs={
-            "CMAKE_FIND_PACKAGE_PREFER_CONFIG":"TRUE",
-        })
+        kwargs = {}
+        if (self.install_folder and self.build_folder
+            and self.install_folder != self.build_folder):
+                kwargs['args'] = [
+                    '-DCONAN_INSTALL_FOLDER={}'.format(self.install_folder)
+                ]
+
+        cmake.configure(
+            defs={
+                "CMAKE_FIND_PACKAGE_PREFER_CONFIG": True,
+                "LP3_RSRC_Build_Tests": self.tests_enabled,
+            },
+            **kwargs
+        )
         return cmake
 
     def build(self):
         cmake = self._configed_cmake()
         cmake.build()
-
-        if self.settings.os == "Emscripten":
-            # TODO: Make this work.
-            # May have to add
-            # set(CMAKE_CXX_FLAGS "-s DISABLE_EXCEPTION_CATCHING=0")
-            # to the root of CMakeLists.txt and turn on explicit support for
-            # NodeFS in the test:
-            # https://emscripten.org/docs/api_reference/Filesystem-API.html#filesystem-api-nodefs
-            # cmd = "node {}/directory_tests".format(self.build_folder)
-            # print(cmd)
-            # self.run(cmd)
-            pass
-        elif not self.options.shared:
-            # If SDL2 is shared, we won't be able to find it in most cases.
-            cmake.test()
-
 
     def package(self):
         cmake = self._configed_cmake()

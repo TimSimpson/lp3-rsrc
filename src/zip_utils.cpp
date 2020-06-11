@@ -2,7 +2,7 @@
 
 namespace lp3::rsrc {
 
-std::optional<LoadedDirectoryInfo> load_directory_info(lp3::sdl::RWops &file) {
+std::optional<LoadedDirectoryInfo> load_directory_info(lp3::sdl::RWops & file) {
     LoadedDirectoryInfo info;
 
     // Zip files have all the files at the start, then all the directory
@@ -46,9 +46,9 @@ std::optional<LoadedDirectoryInfo> load_directory_info(lp3::sdl::RWops &file) {
 
     info.directories.reserve(info.end_info.total_number_of_files);
 
-    char *itr = info.buffer.data();
+    char * itr = info.buffer.data();
     for (int index = 0; index < info.end_info.total_number_of_files; ++index) {
-        CentralDirectoryHeader *ptr = (CentralDirectoryHeader *)itr;
+        CentralDirectoryHeader * ptr = (CentralDirectoryHeader *)itr;
         info.directories.push_back(ptr);
         if (std::string_view(ptr->signature, 4)
             != std::string_view(central_directory_signature, 4)) {

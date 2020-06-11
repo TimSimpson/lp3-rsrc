@@ -26,7 +26,7 @@ class LP3_RSRC_API RContainer {
     virtual ~RContainer() {}
 
     /* Opens a resource for reading. */
-    virtual sdl::RWops load(const char *file) = 0;
+    virtual sdl::RWops load(const char * file) = 0;
 };
 // -/
 
@@ -40,7 +40,7 @@ class LP3_RSRC_API WContainer {
     virtual ~WContainer() {}
 
     /* Opens a resource for writing. */
-    virtual sdl::RWops save(const char *file) = 0;
+    virtual sdl::RWops save(const char * file) = 0;
 };
 // -/
 

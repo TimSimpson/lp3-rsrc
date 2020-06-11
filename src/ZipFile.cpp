@@ -46,7 +46,14 @@ namespace {
             // be best to keep the behavior the same as the streaming zip file
             // class below.
             SDL_assert(amount >= 0);
-            SDL_assert(whence == RW_SEEK_CUR);
+            if (whence == RW_SEEK_SET) {
+                if (amount != 0 || this->position != 0) {
+                    LP3_RSRC_LOG_ERROR("Bad seek; can't seek set on zip file.");
+                    return -1;
+                }
+            } else {
+                SDL_assert(whence == RW_SEEK_CUR);
+            }
             const std::int64_t new_position
                     = (RW_SEEK_SET == whence
                                ? 0
